@@ -3,7 +3,6 @@ package org.qwertech.loderunner;
 import lombok.SneakyThrows;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
-import org.qwertech.loderunner.api.PathFinder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 
 import static java.util.Arrays.asList;
+import static org.qwertech.loderunner.PrintUtils.print;
 import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 public class Main {
@@ -36,6 +36,7 @@ public class Main {
     }
 
     private static LoderunnerAction getAuto(GameBoard gb) {
+//        print(gb);
         return new PathFinder(gb).getMove();
     }
 

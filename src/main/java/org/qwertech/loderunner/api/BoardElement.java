@@ -1,11 +1,11 @@
 package org.qwertech.loderunner.api;
 
+import static java.util.Arrays.asList;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
-
-import static java.util.Arrays.asList;
 
 @RequiredArgsConstructor
 @Getter
@@ -104,6 +104,14 @@ public enum BoardElement {
 
     public boolean isHero() {
         return heros.contains(this);
+    }
+
+    public boolean isLadder() {
+        return this.equals(LADDER) || this.equals(HERO_LADDER);
+    }
+
+    public boolean isPipe() {
+        return this.equals(PIPE) || this.equals(HERO_PIPE_LEFT) || this.equals(HERO_PIPE_RIGHT);
     }
 
     public boolean isGold() {

@@ -1,14 +1,21 @@
 package org.qwertech.loderunner.api;
 
 
+import static org.qwertech.loderunner.api.BoardElement.HERO_PIPE_LEFT;
+import static org.qwertech.loderunner.api.BoardElement.HERO_PIPE_RIGHT;
+import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_LEFT;
+import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_RIGHT;
+import static org.qwertech.loderunner.api.BoardElement.LADDER;
+import static org.qwertech.loderunner.api.BoardElement.NONE;
+import static org.qwertech.loderunner.api.BoardElement.PIPE;
+import static org.qwertech.loderunner.api.BoardElement.UNDESTROYABLE_WALL;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
+
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.qwertech.loderunner.api.BoardElement.*;
-import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 public class GameBoard {
     @Getter
@@ -241,12 +248,18 @@ public class GameBoard {
         BoardPoint under = from.shiftBottom();
         BoardElement underElement = getElementAt(under);
 
-        if (underElement.isNoneOrGold()) {
-            return action.down();
-        }
-        BoardPoint to = getTo(from, action);
+        BoardPoint to = action.getTo(from);
         BoardElement toElement = getElementAt(to);
         BoardElement fromElement = getElementAt(from);
+
+        return canMove(action, toElement, fromElement, underElement);
+    }
+
+    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement, BoardElement underElement) {
+        if ((underElement.isNoneOrGold() || underElement.isPipe()) && fromElement.isNoneOrGold()) {
+            return action.down();
+        }
+
         if (toElement.equals(UNDESTROYABLE_WALL)) {
             return false;
         }
@@ -255,21 +268,26 @@ public class GameBoard {
             if (action.horizontal()) {
                 return true;
             }
-            if ((fromElement.equals(PIPE) || fromElement.isHero()) && action.equals(GO_DOWN)) {
+            if ((fromElement.isLadder()) && action.equals(GO_DOWN)) {
                 return true;
             }
-            if (fromElement.equals(LADDER) && (action.up()||action.horizontal())) {
+            if (fromElement.isLadder() && (action.up() || action.horizontal())) {
                 return true;
             }
-            if (fromElement.equals(NONE)) {
+            if (fromElement.equals(NONE) && action.down()) {
                 return true;
             }
         }
         if (toElement.equals(LADDER)) {
-            if ((fromElement.equals(LADDER)||fromElement.isHero()) && action.vertical()) {
+            if ((fromElement.isLadder()) && action.vertical()) {
                 return true;
             }
-            if ((fromElement.isNoneOrGold()||fromElement.isHero()) && action.horizontal()) {
+            if ((fromElement.isNoneOrGold() || fromElement.isHero()) && action.horizontal()) {
+                return true;
+            }
+        }
+        if (toElement.equals(PIPE)) {
+            if (action.horizontal() || action.down()) {
                 return true;
             }
         }
@@ -284,19 +302,14 @@ public class GameBoard {
         return false;
     }
 
-    public BoardPoint getTo(BoardPoint from, LoderunnerAction action) {
-        BoardPoint to;
-        if (action.equals(GO_LEFT)) {
-            to = from.shiftLeft();
-        } else if (action.equals(GO_RIGHT)) {
-            to = from.shiftRight();
-        } else if (action.equals(GO_UP)) {
-            to = from.shiftTop();
-        } else if (action.equals(GO_DOWN)) {
-            to = from.shiftBottom();
-        } else {
-            throw new IllegalStateException();
+
+    public char[][] toArray() {
+        char[][] chars = new char[size()][size()];
+        for (int i = 0; i < size(); i++) {
+            for (int j = 0; j < size(); j++) {
+                chars[i][j] = getElementAt(new BoardPoint(i, j)).getSymbol();
+            }
         }
-        return to;
+        return chars;
     }
 }

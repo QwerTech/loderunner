@@ -27,10 +27,10 @@ public class LodeRunnerClient extends LoderunnerBase {
     @Override
     protected String doMove(GameBoard gameBoard) {
         clearScreen();
-        gameBoard.printBoard();
+//        gameBoard.printBoard();
         Random random = new Random(System.currentTimeMillis());
         LoderunnerAction action = callback.apply(gameBoard);
-        System.out.println(action.toString());
+//        System.out.println(action.toString());
         return loderunnerActionToString(action);
     }
 
