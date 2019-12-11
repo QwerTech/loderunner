@@ -57,7 +57,7 @@ public class PrintUtils {
         }
     }
 
-    public static void print(GameBoard gb, List<LoderunnerAction> actions, boolean[][] visited) {
+    public static void print(GameBoard gb, List<LoderunnerAction> actions, int[][] visited) {
         char[][] arr = gb.toArray();
         char[][] path = gb.toArray();
         BoardPoint currPoint = gb.getMyPosition();
@@ -74,8 +74,8 @@ public class PrintUtils {
                 char boardItem = arr[j][i];
                 if (c != Character.MIN_VALUE) {
                     System.out.print(c);
-                } else if (visited[j][i]) {
-                    System.out.print('+');
+                } else if (visited[j][i]!=0) {
+                    System.out.print(visited[j][i]);
                 } else {
                     System.out.print(boardItem);
                 }

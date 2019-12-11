@@ -23,12 +23,12 @@ import java.util.stream.Collectors;
 public class PathFinder {
 
     private final GameBoard gb;
-    private boolean[][] visited;
+    private int[][] visited;
 
     public LoderunnerAction getMove() {
         BoardPoint myPosition = this.gb.getMyPosition();
-        visited = new boolean[gb.size()][gb.size()];
-        List<List<LoderunnerAction>> goldPaths = getGoldPaths(myPosition);
+        visited = new int[gb.size()][gb.size()];
+        List<List<LoderunnerAction>> goldPaths = getGoldPaths(myPosition, 1);
 
 
         if (goldPaths.isEmpty()) {
@@ -52,8 +52,9 @@ public class PathFinder {
         return path.get(0);
     }
 
+
     private boolean isVisited(BoardPoint boardPoint) {
-        return visited[boardPoint.getX()][boardPoint.getY()];
+        return visited[boardPoint.getX()][boardPoint.getY()] != 0;
     }
 
     private boolean canMoveToAndNotVisited(BoardPoint from, LoderunnerAction action) {
@@ -61,17 +62,17 @@ public class PathFinder {
         return gb.canMoveTo(from, action) && !isVisited(point);
     }
 
-    private List<List<LoderunnerAction>> getGoldPaths(BoardPoint from) {
-        visited[from.getX()][from.getY()] = true;
-        return asList(getMoveWithAction(from, LoderunnerAction.GO_LEFT),
-                getMoveWithAction(from, LoderunnerAction.GO_RIGHT),
-                getMoveWithAction(from, LoderunnerAction.GO_DOWN),
-                getMoveWithAction(from, LoderunnerAction.GO_UP)).stream()
+    private List<List<LoderunnerAction>> getGoldPaths(BoardPoint from, int length) {
+        visited[from.getX()][from.getY()] = length;
+        return asList(getMoveWithAction(from, LoderunnerAction.GO_LEFT, length),
+                getMoveWithAction(from, LoderunnerAction.GO_RIGHT, length),
+                getMoveWithAction(from, LoderunnerAction.GO_DOWN, length),
+                getMoveWithAction(from, LoderunnerAction.GO_UP, length)).stream()
                 .filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
 
     }
 
-    private List<List<LoderunnerAction>> getMoveWithAction(BoardPoint from, LoderunnerAction action) {
+    private List<List<LoderunnerAction>> getMoveWithAction(BoardPoint from, LoderunnerAction action, int length) {
         if (canMoveToAndNotVisited(from, action)) {
             BoardPoint point = action.getTo(from);
             if (gb.hasGoldAt(point)) {
@@ -79,7 +80,7 @@ public class PathFinder {
                 List<LoderunnerAction> path = new ArrayList<>(singletonList(action));
                 return new ArrayList<>(singletonList(path));
             } else {
-                List<List<LoderunnerAction>> movements = getGoldPaths(point);
+                List<List<LoderunnerAction>> movements = getGoldPaths(point, ++length);
                 if (movements == null) {
                     return null;
                 } else {
@@ -91,5 +92,54 @@ public class PathFinder {
         return null;
     }
 
+    private List<List<LoderunnerAction>> fillVisited(BoardPoint from, LoderunnerAction action, int length) {
+        if (canMoveToAndNotVisited(from, action)) {
+            BoardPoint point = action.getTo(from);
+            List<List<LoderunnerAction>> movements = getGoldPaths(point, ++length);
+            if (movements == null) {
+                return null;
+            } else {
+                movements.forEach(m -> m.add(action));
+                return movements;
+            }
 
+        }
+        return null;
+    }
+
+    public List<LoderunnerAction> recoverPath() {
+        gb.getGoldPositions().stream().min(Comparator.comparing(g -> visited[g.getX()][g.getY()]))
+        .ifPresent(g->{
+
+        });
+    }
+
+    public void wavePropagation() {  // распространение волны
+        visited = new int[gb.size()][gb.size()]; // массив, где будут хранится "отметки" каждого узла
+        int steps = gb.size() * gb.size();
+        int markNumber = 1;                        // счетчик
+        visited[gb.getMyPosition().getX()][gb.getMyPosition().getY()] = markNumber;         // инициализация стартового узла
+        while (steps > 0) {          // пока не достигли финишного узла
+            for (int i = 0; i < visited.length; i++) {
+                for (int j = 0; j < visited.length; j++) {
+                    if (visited[i][j] == markNumber) {                                          // начинаем со стартового узла
+                        BoardPoint from = new BoardPoint(i, j);
+                        checkPoint(markNumber, from, LoderunnerAction.GO_LEFT);
+                        checkPoint(markNumber, from, LoderunnerAction.GO_RIGHT);
+                        checkPoint(markNumber, from, LoderunnerAction.GO_DOWN);
+                        checkPoint(markNumber, from, LoderunnerAction.GO_UP);
+                    }
+                }
+            }
+            markNumber++;
+            steps--;
+        }
+    }
+
+    private void checkPoint(int markNumber, BoardPoint from, LoderunnerAction action) {
+        BoardPoint to = action.getTo(from);
+        if (gb.canMoveTo(from, action) && visited[to.getX()][to.getY()] == 0) {
+            visited[to.getX()][to.getY()] = markNumber + 1;
+        }
+    }
 }
