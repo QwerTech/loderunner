@@ -22,6 +22,12 @@ public class GameBoardTest {
         assertTrue(GameBoard.canMove(LoderunnerAction.GO_DOWN, BoardElement.LADDER, BoardElement.HERO_LADDER, BoardElement.LADDER));
     }
     @Test
+    public void moveDownToLeader() {
+        assertTrue(GameBoard.canMove(LoderunnerAction.GO_DOWN, BoardElement.LADDER, BoardElement.HERO_LEFT, BoardElement.LADDER));
+        assertTrue(GameBoard.canMove(LoderunnerAction.GO_DOWN, BoardElement.LADDER, BoardElement.HERO_RIGHT, BoardElement.LADDER));
+        assertTrue(GameBoard.canMove(LoderunnerAction.GO_DOWN, BoardElement.LADDER, BoardElement.NONE, BoardElement.LADDER));
+    }
+    @Test
     public void moveLeftOnPipe() {
         assertTrue(GameBoard.canMove(LoderunnerAction.GO_LEFT, BoardElement.PIPE, BoardElement.PIPE, BoardElement.NONE));
     }

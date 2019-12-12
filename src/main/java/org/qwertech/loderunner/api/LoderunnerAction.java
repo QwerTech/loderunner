@@ -3,6 +3,10 @@ package org.qwertech.loderunner.api;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
+
 @RequiredArgsConstructor
 @Getter
 public enum LoderunnerAction {
@@ -16,6 +20,10 @@ public enum LoderunnerAction {
     SUICIDE('x');
 
     private final char symbol;
+
+    public static List<LoderunnerAction> moveActions() {
+        return asList(GO_LEFT, GO_RIGHT, GO_UP, GO_DOWN);
+    }
 
     public boolean left() {
         return this.equals(GO_LEFT);
@@ -59,6 +67,22 @@ public enum LoderunnerAction {
             throw new IllegalStateException();
         }
         return to;
+    }
+
+    public BoardPoint getFrom(BoardPoint to) {
+        BoardPoint from;
+        if (this.equals(GO_LEFT)) {
+            from = to.shiftRight();
+        } else if (this.equals(GO_RIGHT)) {
+            from = to.shiftLeft();
+        } else if (this.equals(GO_UP)) {
+            from = to.shiftBottom();
+        } else if (this.equals(GO_DOWN)) {
+            from = to.shiftTop();
+        } else {
+            throw new IllegalStateException();
+        }
+        return from;
     }
 
     @Override

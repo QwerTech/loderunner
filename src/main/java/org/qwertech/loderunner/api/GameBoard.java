@@ -1,21 +1,14 @@
 package org.qwertech.loderunner.api;
 
 
-import static org.qwertech.loderunner.api.BoardElement.HERO_PIPE_LEFT;
-import static org.qwertech.loderunner.api.BoardElement.HERO_PIPE_RIGHT;
-import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_LEFT;
-import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_RIGHT;
-import static org.qwertech.loderunner.api.BoardElement.LADDER;
-import static org.qwertech.loderunner.api.BoardElement.NONE;
-import static org.qwertech.loderunner.api.BoardElement.PIPE;
-import static org.qwertech.loderunner.api.BoardElement.UNDESTROYABLE_WALL;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
-
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.qwertech.loderunner.api.BoardElement.*;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
 
 public class GameBoard {
     @Getter
@@ -23,6 +16,53 @@ public class GameBoard {
 
     public GameBoard(String boardString) {
         this.boardString = boardString.replace("\n", "");
+    }
+
+    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement, BoardElement underElement) {
+        if ((underElement.isNoneOrGold() || underElement.isPipe()) && fromElement.isNoneOrGold()) {
+            return action.down();
+        }
+
+        if (toElement.equals(UNDESTROYABLE_WALL)) {
+            return false;
+        }
+
+        if (toElement.isNoneOrGold()) {
+            if (action.horizontal()) {
+                return true;
+            }
+            if ((fromElement.isLadder()) && action.equals(GO_DOWN)) {
+                return true;
+            }
+            if (fromElement.isLadder() && (action.up() || action.horizontal())) {
+                return true;
+            }
+            if (fromElement.equals(NONE) && action.down()) {
+                return true;
+            }
+        }
+        if (toElement.equals(LADDER)) {
+            if ((fromElement.isLadder()) && action.vertical()) {
+                return true;
+            }
+            if ((fromElement.isNoneOrGold() || fromElement.isHero()) && (action.horizontal() || action.down())) {
+                return true;
+            }
+        }
+        if (toElement.equals(PIPE)) {
+            if (action.horizontal() || action.down()) {
+                return true;
+            }
+        }
+        if (fromElement.equals(PIPE) || fromElement.equals(HERO_PIPE_LEFT) || fromElement.equals(HERO_PIPE_RIGHT)) {
+            if (action.horizontal() && toElement.equals(PIPE)) {
+                return true;
+            }
+            if (toElement.isNoneOrGold() && action.down()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int size() {
@@ -254,54 +294,6 @@ public class GameBoard {
 
         return canMove(action, toElement, fromElement, underElement);
     }
-
-    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement, BoardElement underElement) {
-        if ((underElement.isNoneOrGold() || underElement.isPipe()) && fromElement.isNoneOrGold()) {
-            return action.down();
-        }
-
-        if (toElement.equals(UNDESTROYABLE_WALL)) {
-            return false;
-        }
-
-        if (toElement.isNoneOrGold()) {
-            if (action.horizontal()) {
-                return true;
-            }
-            if ((fromElement.isLadder()) && action.equals(GO_DOWN)) {
-                return true;
-            }
-            if (fromElement.isLadder() && (action.up() || action.horizontal())) {
-                return true;
-            }
-            if (fromElement.equals(NONE) && action.down()) {
-                return true;
-            }
-        }
-        if (toElement.equals(LADDER)) {
-            if ((fromElement.isLadder()) && action.vertical()) {
-                return true;
-            }
-            if ((fromElement.isNoneOrGold() || fromElement.isHero()) && action.horizontal()) {
-                return true;
-            }
-        }
-        if (toElement.equals(PIPE)) {
-            if (action.horizontal() || action.down()) {
-                return true;
-            }
-        }
-        if (fromElement.equals(PIPE) || fromElement.equals(HERO_PIPE_LEFT) || fromElement.equals(HERO_PIPE_RIGHT)) {
-            if (action.horizontal() && toElement.equals(PIPE)) {
-                return true;
-            }
-            if (toElement.isNoneOrGold() && action.down()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     public char[][] toArray() {
         char[][] chars = new char[size()][size()];

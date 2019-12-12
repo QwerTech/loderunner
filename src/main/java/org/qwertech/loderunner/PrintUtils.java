@@ -1,12 +1,12 @@
 package org.qwertech.loderunner;
 
-import static org.qwertech.loderunner.api.BoardElement.heros;
-
 import org.qwertech.loderunner.api.BoardPoint;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
 
 import java.util.List;
+
+import static org.qwertech.loderunner.api.BoardElement.heros;
 
 /**
  * PrintUtils.
@@ -24,16 +24,69 @@ public class PrintUtils {
         }
     }
 
-    public static void print(GameBoard gb, boolean[][] visited) {
+
+    public static char[][] visitedToChars(char[][] background, int[][] visited) {
+        int size = visited.length;
+        char[][] chars = new char[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                int point = visited[i][j];
+                chars[i][j] = point > 0 ? waveValueToString(point) : background[i][j];
+            }
+        }
+        return chars;
+    }
+
+    public static void print(GameBoard gb, int[][] visited) {
         char[][] arr = gb.toArray();
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr.length; j++) {
 
                 char boardItem = arr[j][i];
                 boolean player = heros.stream().anyMatch(h -> h.getSymbol() == boardItem);
-                System.out.print(visited[j][i] && !player ? '+' : boardItem);
+                Integer point = visited[j][i];
+                System.out.print(point != 0 && !player ? waveValueToString(point) : boardItem);
             }
             System.out.println();
+        }
+    }
+
+    public static void print(char[][] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr.length; j++) {
+                char boardItem = arr[j][i];
+                System.out.print(boardItem);
+            }
+            System.out.println();
+        }
+    }
+
+    public static void print(char[][]... arrs) {
+        for (int i = 0; i < arrs[0].length; i++) {
+            for (int k = 0; k < arrs.length; k++) {
+                char[][] arr = arrs[k];
+                for (int j = 0; j < arr.length; j++) {
+                    char boardItem = arr[j][i];
+                    System.out.print(boardItem);
+                }
+                System.out.print("|");
+            }
+            System.out.println();
+        }
+    }
+
+    private static char waveValueToString(Integer point) {
+        if (point == 0) {
+            return ' ';
+        }
+        if (point < 33) {
+            return '∙';
+        } else if (point < 66) {
+            return '◦';
+        } else if (point < 80) {
+            return '•';
+        } else {
+            return '♦';
         }
     }
 
@@ -74,7 +127,7 @@ public class PrintUtils {
                 char boardItem = arr[j][i];
                 if (c != Character.MIN_VALUE) {
                     System.out.print(c);
-                } else if (visited[j][i]!=0) {
+                } else if (visited[j][i] != 0) {
                     System.out.print(visited[j][i]);
                 } else {
                     System.out.print(boardItem);
