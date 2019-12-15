@@ -2,11 +2,13 @@ package org.qwertech.loderunner.api;
 
 
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.qwertech.loderunner.api.BoardElement.*;
 import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
 
@@ -14,12 +16,31 @@ public class GameBoard {
     @Getter
     private String boardString;
 
-    public GameBoard(String boardString) {
-        this.boardString = boardString.replace("\n", "");
+    public GameBoard(@NonNull String boardString) {
+        this.boardString = boardString
+                .replace("\n", "")
+                .replace("\r", "");
     }
 
-    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement, BoardElement underElement) {
-        if ((underElement.isNoneOrGold() || underElement.isPipe()) && fromElement.isNoneOrGold()) {
+    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement,
+                                     BoardElement underFromElement) {
+        List<BoardElement> fallIfUnderIsHero = asList(HERO_DRILL_LEFT,
+                HERO_DRILL_RIGHT,
+                HERO_LEFT,
+                HERO_RIGHT,
+                HERO_FALL_LEFT,
+                HERO_FALL_RIGHT,
+                HERO_PIPE_LEFT,
+                HERO_PIPE_RIGHT);
+        List<BoardElement> heroOnNothing = asList(HERO_DIE,
+                HERO_DRILL_LEFT,
+                HERO_DRILL_RIGHT,
+                HERO_LEFT,
+                HERO_RIGHT,
+                HERO_FALL_LEFT,
+                HERO_FALL_RIGHT);
+        if ((underFromElement.isNoneOrGold() || underFromElement.isPipe() || fallIfUnderIsHero.contains(underFromElement))
+                && (fromElement.isNoneOrGold() || heroOnNothing.contains(fromElement))) {
             return action.down();
         }
 

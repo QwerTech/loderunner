@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.qwertech.loderunner.PrintUtils.actionsToSymbols;
 import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 @Slf4j
@@ -23,36 +24,27 @@ public class PathFinder {
     private final GameBoard gb;
     private int[][] visited;
 
-    public LoderunnerAction getMove() {
-        BoardPoint myPosition = this.gb.getMyPosition();
+    public List<LoderunnerAction> getPath() {
         visited = new int[gb.size()][gb.size()];
         wavePropagation();
-        PrintUtils.print(gb.toArray(), PrintUtils.visitedToChars(gb.toArray(), visited));
         List<LoderunnerAction> path = recoverPath();
-//        List<List<LoderunnerAction>> goldPaths = getGoldPaths(myPosition, 1);
 
-//
         if (path.isEmpty()) {
-//            log.warn("No path found.SUICIDE");
-//            return LoderunnerAction.GO_LEFT;
             List<LoderunnerAction> randomActions = asList(DRILL_LEFT, DRILL_RIGHT, GO_LEFT, GO_RIGHT);
-            return randomActions.get(new Random().nextInt(randomActions.size()));
-//            return DO_NOTHING;
+            LoderunnerAction action = randomActions.get(new Random().nextInt(randomActions.size()));
+            log.warn("No path found. Action:" + action);
+            return singletonList(action);
         }
-//        List<LoderunnerAction> path;
-//        if (goldPaths.size() == 1) {
-//            path = goldPaths.get(0);
-//        } else {
-//            path = goldPaths.stream().min(Comparator.comparing(List::size)).orElse(null);
-//        }
         Collections.reverse(path);
-        System.out.println();
-        System.out.println();
-        PrintUtils.print(gb, path, visited);
-        System.out.print(path.size() + "     ");
-        System.out.print(path);
+        PrintUtils.clearScreen();
+        PrintUtils.print(gb.toArray(),
+                PrintUtils.visitedToChars(gb.toArray(), visited),
+                actionsToSymbols(gb, path));
+        return path;
+    }
 
-        return path.get(0);
+    public LoderunnerAction getMove() {
+        return getPath().get(0);
     }
 
 
@@ -115,7 +107,7 @@ public class PathFinder {
                 .map(a -> new Pair<>(a, getVisitedValue(a)))
                 .filter(p -> p.getValue() != 0)
                 .min(Comparator.comparing(Pair::getValue));
-        if(!gold.isPresent()){
+        if (!gold.isPresent()) {
             return emptyList();
         }
         BoardPoint closestGold = gold.get().getKey();
@@ -127,6 +119,7 @@ public class PathFinder {
             LoderunnerAction action = moveActions().stream()
                     .map(a -> new Pair<>(a, getVisitedValue(a.getFrom(currentNode1))))
                     .filter(p -> p.getValue() != 0)
+                    .filter(p -> gb.canMoveTo(p.getKey().getFrom(currentNode1), p.getKey()))
                     .min(Comparator.comparing(Pair::getValue))// проверяем соседние узлы
                     .orElseThrow(IllegalStateException::new).getKey();
             path.add(action);// заносится в массив

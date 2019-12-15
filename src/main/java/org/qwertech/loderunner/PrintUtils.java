@@ -4,9 +4,12 @@ import org.qwertech.loderunner.api.BoardPoint;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static org.qwertech.loderunner.api.BoardElement.heros;
+import static org.fusesource.jansi.Ansi.Color.CYAN;
+import static org.fusesource.jansi.Ansi.ansi;
+import static org.qwertech.loderunner.api.BoardElement.*;
 
 /**
  * PrintUtils.
@@ -14,17 +17,6 @@ import static org.qwertech.loderunner.api.BoardElement.heros;
  * @author Pavel_Novikov
  */
 public class PrintUtils {
-    public static void print(boolean[][] arr) {
-        for (int i = arr.length - 1; i >= 0; i--) {
-            for (int j = arr[i].length - 1; j >= 0; j--) {
-
-                System.out.print(arr[i][j] ? "+" : "-");
-            }
-            System.out.println();
-        }
-    }
-
-
     public static char[][] visitedToChars(char[][] background, int[][] visited) {
         int size = visited.length;
         char[][] chars = new char[size][size];
@@ -37,37 +29,35 @@ public class PrintUtils {
         return chars;
     }
 
-    public static void print(GameBoard gb, int[][] visited) {
-        char[][] arr = gb.toArray();
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-
-                char boardItem = arr[j][i];
-                boolean player = heros.stream().anyMatch(h -> h.getSymbol() == boardItem);
-                Integer point = visited[j][i];
-                System.out.print(point != 0 && !player ? waveValueToString(point) : boardItem);
-            }
-            System.out.println();
-        }
-    }
-
-    public static void print(char[][] arr) {
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-                char boardItem = arr[j][i];
-                System.out.print(boardItem);
-            }
-            System.out.println();
-        }
-    }
-
     public static void print(char[][]... arrs) {
+        System.out.println();
         for (int i = 0; i < arrs[0].length; i++) {
             for (int k = 0; k < arrs.length; k++) {
                 char[][] arr = arrs[k];
                 for (int j = 0; j < arr.length; j++) {
                     char boardItem = arr[j][i];
-                    System.out.print(boardItem);
+                    if (BRICK.getSymbol() == boardItem)
+                        System.out.print(ansi().bgYellow().fgBrightYellow().a(boardItem).reset());
+                    else if (UNDESTROYABLE_WALL.getSymbol() == boardItem) {
+                        System.out.print(ansi().bgYellow().a(boardItem).reset());
+                    } else if (GREEN_GOLD.getSymbol() == boardItem) {
+                        System.out.print(ansi().bgGreen().a(boardItem).reset());
+                    } else if (RED_GOLD.getSymbol() == boardItem) {
+                        System.out.print(ansi().bgRed().a(boardItem).reset());
+                    } else if (YELLOW_GOLD.getSymbol() == boardItem) {
+                        System.out.print(ansi().bgBrightYellow().a(boardItem).reset());
+                    } else if (heros.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                        System.out.print(ansi().bgBrightYellow().fgMagenta().a(boardItem).reset());
+                    } else if (otherHeros.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                        System.out.print(ansi().fgBrightBlue().a(boardItem).reset());
+                    } else if (otherEnemy.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                        System.out.print(ansi().fgBrightRed().a(boardItem).reset());
+                    } else if (Arrays.stream(LoderunnerAction.values()).anyMatch(h -> h.getSymbol() == boardItem)) {
+                        System.out.print(ansi().bgBright(CYAN).a(boardItem).reset());
+                    } else {
+                        System.out.print(boardItem);
+                    }
+
                 }
                 System.out.print("|");
             }
@@ -90,62 +80,20 @@ public class PrintUtils {
         }
     }
 
-    public static void print(GameBoard gb, List<LoderunnerAction> actions) {
-        char[][] arr = gb.toArray();
+    public static void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+
+    public static char[][] actionsToSymbols(GameBoard gb, List<LoderunnerAction> actions) {
         char[][] path = gb.toArray();
-        BoardPoint currPoint = gb.getMyPosition();
-        for (LoderunnerAction a : actions) {
+        BoardPoint currPoint = actions.get(0).getTo(gb.getMyPosition()); //skip my current position
+
+        for (int i = 1; i < actions.size(); i++) {
+            LoderunnerAction a = actions.get(i);
             path[currPoint.getX()][currPoint.getY()] = a.getSymbol();
             currPoint = a.getTo(currPoint);
         }
-        path[gb.getMyPosition().getX()][gb.getMyPosition().getY()] = '⚫';
-        int h = 0;
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-                //TODO
-                char c = path[j][i];
-                System.out.print(c != Character.MIN_VALUE ? c : arr[j][i]);
-            }
-            System.out.println();
-        }
-    }
-
-    public static void print(GameBoard gb, List<LoderunnerAction> actions, int[][] visited) {
-        char[][] arr = gb.toArray();
-        char[][] path = gb.toArray();
-        BoardPoint currPoint = gb.getMyPosition();
-        for (LoderunnerAction a : actions) {
-            path[currPoint.getX()][currPoint.getY()] = a.getSymbol();
-            currPoint = a.getTo(currPoint);
-        }
-        path[gb.getMyPosition().getX()][gb.getMyPosition().getY()] = '⚫';
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-                //TODO
-                char c = path[j][i];
-
-                char boardItem = arr[j][i];
-                if (c != Character.MIN_VALUE) {
-                    System.out.print(c);
-                } else if (visited[j][i] != 0) {
-                    System.out.print(visited[j][i]);
-                } else {
-                    System.out.print(boardItem);
-                }
-
-            }
-            System.out.println();
-        }
-    }
-
-    public static void print(GameBoard gb) {
-        char[][] arr = gb.toArray();
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-
-                System.out.print(arr[j][i]);
-            }
-            System.out.println();
-        }
+        return path;
     }
 }

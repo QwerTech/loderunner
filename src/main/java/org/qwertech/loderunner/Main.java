@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Random;
 
 import static java.util.Arrays.asList;
-import static org.qwertech.loderunner.PrintUtils.print;
 import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 public class Main {
@@ -26,6 +25,8 @@ public class Main {
 
         LodeRunnerClient client = new LodeRunnerClient(SERVER_ADDRESS);
         client.run(Main::getAuto);
+//        client.run(Main::getManual);
+
 
         while (true) {
             Thread.sleep(100);

@@ -1,11 +1,11 @@
 package org.qwertech.loderunner.api;
 
-import static java.util.Arrays.asList;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+
+import static java.util.Arrays.asList;
 
 @RequiredArgsConstructor
 @Getter
@@ -28,9 +28,9 @@ public enum BoardElement {
     ENEMY_PIPE_RIGHT('>'),
     ENEMY_PIT('X'),
 
-    YELLOW_GOLD('$'),
-    GREEN_GOLD('&'),
-    RED_GOLD('@'),
+    YELLOW_GOLD('$'),//+1+3+5+6+7+8+4
+    GREEN_GOLD('&'),//+6+9+13+14+5
+    RED_GOLD('@'),//+13+15+16+17+20+12+18+19+12
 
     HERO_DIE('Ѡ'),
     HERO_DRILL_LEFT('Я'),
@@ -85,6 +85,22 @@ public enum BoardElement {
             HERO_FALL_RIGHT,
             HERO_PIPE_LEFT,
             HERO_PIPE_RIGHT
+    );
+    public static List<BoardElement> otherHeros = asList(
+            OTHER_HERO_DIE,
+            OTHER_HERO_LEFT,
+            OTHER_HERO_RIGHT,
+            OTHER_HERO_LADDER,
+            OTHER_HERO_PIPE_LEFT,
+            OTHER_HERO_PIPE_RIGHT
+    );
+    public static List<BoardElement> otherEnemy = asList(
+            ENEMY_LADDER,
+            ENEMY_LEFT,
+            ENEMY_RIGHT,
+            ENEMY_PIPE_LEFT,
+            ENEMY_PIPE_RIGHT,
+            ENEMY_PIT
     );
     public static List<BoardElement> golds = asList(
             GREEN_GOLD,
