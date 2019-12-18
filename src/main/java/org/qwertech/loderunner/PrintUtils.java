@@ -1,5 +1,17 @@
 package org.qwertech.loderunner;
 
+import static org.fusesource.jansi.Ansi.Color.CYAN;
+import static org.fusesource.jansi.Ansi.ansi;
+import static org.qwertech.loderunner.api.BoardElement.BRICK;
+import static org.qwertech.loderunner.api.BoardElement.GREEN_GOLD;
+import static org.qwertech.loderunner.api.BoardElement.RED_GOLD;
+import static org.qwertech.loderunner.api.BoardElement.UNDESTROYABLE_WALL;
+import static org.qwertech.loderunner.api.BoardElement.YELLOW_GOLD;
+import static org.qwertech.loderunner.api.BoardElement.heroes;
+import static org.qwertech.loderunner.api.BoardElement.enemies;
+import static org.qwertech.loderunner.api.BoardElement.otherHeroes;
+
+import org.qwertech.loderunner.api.BoardElement;
 import org.qwertech.loderunner.api.BoardPoint;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
@@ -7,52 +19,49 @@ import org.qwertech.loderunner.api.LoderunnerAction;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.fusesource.jansi.Ansi.Color.CYAN;
-import static org.fusesource.jansi.Ansi.ansi;
-import static org.qwertech.loderunner.api.BoardElement.*;
-
 /**
  * PrintUtils.
  *
  * @author Pavel_Novikov
  */
 public class PrintUtils {
-    public static char[][] visitedToChars(char[][] background, int[][] visited) {
+    public static String[][] visitedToChars(String[][] background, int[][] visited) {
         int size = visited.length;
-        char[][] chars = new char[size][size];
+        String[][] chars = new String[size][size];
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 int point = visited[i][j];
-                chars[i][j] = point > 0 ? waveValueToString(point) : background[i][j];
+                String back = background[i][j];
+                chars[i][j] = point > 1 ? waveValueToString(point) : (back + back + back );
             }
         }
         return chars;
     }
 
-    public static void print(char[][]... arrs) {
+    public static void print(String[][]... arrs) {
         System.out.println();
         for (int i = 0; i < arrs[0].length; i++) {
             for (int k = 0; k < arrs.length; k++) {
-                char[][] arr = arrs[k];
+                String[][] arr = arrs[k];
                 for (int j = 0; j < arr.length; j++) {
-                    char boardItem = arr[j][i];
-                    if (BRICK.getSymbol() == boardItem)
+                    String boardItem = arr[j][i];
+                    if (contains(boardItem, BRICK))
                         System.out.print(ansi().bgYellow().fgBrightYellow().a(boardItem).reset());
-                    else if (UNDESTROYABLE_WALL.getSymbol() == boardItem) {
+                    else if (contains(boardItem, UNDESTROYABLE_WALL)) {
                         System.out.print(ansi().bgYellow().a(boardItem).reset());
-                    } else if (GREEN_GOLD.getSymbol() == boardItem) {
+                    } else if (contains(boardItem, GREEN_GOLD)) {
                         System.out.print(ansi().bgGreen().a(boardItem).reset());
-                    } else if (RED_GOLD.getSymbol() == boardItem) {
+                    } else if (contains(boardItem, RED_GOLD)) {
                         System.out.print(ansi().bgRed().a(boardItem).reset());
-                    } else if (YELLOW_GOLD.getSymbol() == boardItem) {
+                    } else if (contains(boardItem, YELLOW_GOLD)) {
                         System.out.print(ansi().bgBrightYellow().a(boardItem).reset());
-                    } else if (heros.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                    } else if (heroes.stream().anyMatch(h -> contains(boardItem, h))) {
                         System.out.print(ansi().bgBrightYellow().fgMagenta().a(boardItem).reset());
-                    } else if (otherHeros.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                    } else if (otherHeroes.stream().anyMatch(h -> contains(boardItem, h))) {
                         System.out.print(ansi().fgBrightBlue().a(boardItem).reset());
-                    } else if (otherEnemy.stream().anyMatch(h -> h.getSymbol() == boardItem)) {
+                    } else if (enemies.stream().anyMatch(h -> contains(boardItem, h))) {
                         System.out.print(ansi().fgBrightRed().a(boardItem).reset());
-                    } else if (Arrays.stream(LoderunnerAction.values()).anyMatch(h -> h.getSymbol() == boardItem)) {
+                    } else if (Arrays.stream(LoderunnerAction.values()).anyMatch(h -> String.valueOf(h.getSymbol()).equals(boardItem))) {
                         System.out.print(ansi().bgBright(CYAN).a(boardItem).reset());
                     } else {
                         System.out.print(boardItem);
@@ -65,19 +74,12 @@ public class PrintUtils {
         }
     }
 
-    private static char waveValueToString(Integer point) {
-        if (point == 0) {
-            return ' ';
-        }
-        if (point < 33) {
-            return '∙';
-        } else if (point < 66) {
-            return '◦';
-        } else if (point < 80) {
-            return '•';
-        } else {
-            return '♦';
-        }
+    private static boolean contains(String boardItem, BoardElement boardElement) {
+        return boardItem.contains(String.valueOf(boardElement.getSymbol()));
+    }
+
+    private static String waveValueToString(Integer point) {
+        return point<100?String.format(" %02d", point):" 99";
     }
 
     public static void clearScreen() {
@@ -85,14 +87,15 @@ public class PrintUtils {
         System.out.flush();
     }
 
-    public static char[][] actionsToSymbols(GameBoard gb, List<LoderunnerAction> actions) {
-        char[][] path = gb.toArray();
+    public static String[][] actionsToSymbols(GameBoard gb, List<LoderunnerAction> actions) {
+        String[][] path = gb.toArray();
         BoardPoint currPoint = actions.get(0).getTo(gb.getMyPosition()); //skip my current position
-
-        for (int i = 1; i < actions.size(); i++) {
+        int i = actions.get(0).getCost();
+        while (i < actions.size()) {
             LoderunnerAction a = actions.get(i);
-            path[currPoint.getX()][currPoint.getY()] = a.getSymbol();
+            path[currPoint.getX()][currPoint.getY()] = String.valueOf(a.getSymbol());
             currPoint = a.getTo(currPoint);
+            i = i + a.getCost();
         }
         return path;
     }

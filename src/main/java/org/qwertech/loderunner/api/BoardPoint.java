@@ -89,6 +89,10 @@ public class BoardPoint {
         return !equals(o);
     }
 
+    public int distance(BoardPoint other) {
+        return Math.abs(getY() - other.getY()) + Math.abs(getX() - other.getX());
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(x, y);

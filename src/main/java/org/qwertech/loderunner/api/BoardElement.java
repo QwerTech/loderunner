@@ -1,11 +1,12 @@
 package org.qwertech.loderunner.api;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
-
-import static java.util.Arrays.asList;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Getter
@@ -28,9 +29,9 @@ public enum BoardElement {
     ENEMY_PIPE_RIGHT('>'),
     ENEMY_PIT('X'),
 
-    YELLOW_GOLD('$'),//+1+3+5+6+7+8+4
-    GREEN_GOLD('&'),//+6+9+13+14+5
-    RED_GOLD('@'),//+13+15+16+17+20+12+18+19+12
+    YELLOW_GOLD('$'),//1
+    GREEN_GOLD('&'),//5
+    RED_GOLD('@'),//10
 
     HERO_DIE('Ѡ'),
     HERO_DRILL_LEFT('Я'),
@@ -74,7 +75,12 @@ public enum BoardElement {
 
     THE_SHADOW_PILL('S');
 
-    public static List<BoardElement> heros = asList(
+    public static final Map<BoardElement, Integer> goldPrices = ImmutableMap.of(
+            YELLOW_GOLD, 1,
+            GREEN_GOLD, 3,
+            RED_GOLD, 5);
+
+    public static final List<BoardElement> heroes = ImmutableList.of(
             HERO_DIE,
             HERO_DRILL_LEFT,
             HERO_DRILL_RIGHT,
@@ -86,7 +92,7 @@ public enum BoardElement {
             HERO_PIPE_LEFT,
             HERO_PIPE_RIGHT
     );
-    public static List<BoardElement> otherHeros = asList(
+    public static final List<BoardElement> otherHeroes = ImmutableList.of(
             OTHER_HERO_DIE,
             OTHER_HERO_LEFT,
             OTHER_HERO_RIGHT,
@@ -94,7 +100,7 @@ public enum BoardElement {
             OTHER_HERO_PIPE_LEFT,
             OTHER_HERO_PIPE_RIGHT
     );
-    public static List<BoardElement> otherEnemy = asList(
+    public static final List<BoardElement> enemies = ImmutableList.of(
             ENEMY_LADDER,
             ENEMY_LEFT,
             ENEMY_RIGHT,
@@ -102,10 +108,18 @@ public enum BoardElement {
             ENEMY_PIPE_RIGHT,
             ENEMY_PIT
     );
-    public static List<BoardElement> golds = asList(
+    public static final List<BoardElement> golds = ImmutableList.of(
             GREEN_GOLD,
             RED_GOLD,
             YELLOW_GOLD
+    );
+
+    public static final List<BoardElement> pits = ImmutableList.of(
+            PIT_FILL_1,
+            PIT_FILL_2,
+            PIT_FILL_3,
+            PIT_FILL_4,
+            DRILL_PIT
     );
     final char symbol;
 
@@ -119,7 +133,23 @@ public enum BoardElement {
     }
 
     public boolean isHero() {
-        return heros.contains(this);
+        return heroes.contains(this);
+    }
+
+    public boolean isPit() {
+        return pits.contains(this);
+    }
+
+    public boolean isBrick() {
+        return BRICK.equals(this);
+    }
+
+    public boolean isEnemy() {
+        return enemies.contains(this);
+    }
+
+    public boolean isOtherHero() {
+        return otherHeroes.contains(this);
     }
 
     public boolean isLadder() {

@@ -1,27 +1,47 @@
 package org.qwertech.loderunner;
 
 
-import javafx.util.Pair;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.qwertech.loderunner.api.BoardPoint;
-import org.qwertech.loderunner.api.GameBoard;
-import org.qwertech.loderunner.api.LoderunnerAction;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.qwertech.loderunner.PrintUtils.actionsToSymbols;
-import static org.qwertech.loderunner.api.LoderunnerAction.*;
+import static org.qwertech.loderunner.api.BoardElement.goldPrices;
+import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_LEFT;
+import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_RIGHT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_LEFT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_RIGHT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_UP;
+import static org.qwertech.loderunner.api.LoderunnerAction.moveActions;
+
+import javafx.util.Pair;
+import lombok.extern.slf4j.Slf4j;
+import org.qwertech.loderunner.api.BoardElement;
+import org.qwertech.loderunner.api.BoardPoint;
+import org.qwertech.loderunner.api.GameBoard;
+import org.qwertech.loderunner.api.LoderunnerAction;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @Slf4j
-@RequiredArgsConstructor
 public class PathFinder {
 
+    public PathFinder(GameBoard gb) {
+        this.gb = gb;
+
+        moveActionChecker = new MoveActionChecker(gb);
+    }
+
     private final GameBoard gb;
+    private MoveActionChecker moveActionChecker;
     private int[][] visited;
 
     public List<LoderunnerAction> getPath() {
@@ -40,6 +60,7 @@ public class PathFinder {
         PrintUtils.print(gb.toArray(),
                 PrintUtils.visitedToChars(gb.toArray(), visited),
                 actionsToSymbols(gb, path));
+        System.out.println(path);
         return path;
     }
 
@@ -54,7 +75,7 @@ public class PathFinder {
 
     private boolean canMoveToAndNotVisited(BoardPoint from, LoderunnerAction action) {
         BoardPoint point = action.getTo(from);
-        return gb.canMoveTo(from, action) && !isVisited(point);
+        return moveActionChecker.canMoveTo(from, action) && !isVisited(point);
     }
 
     private List<List<LoderunnerAction>> getGoldPaths(BoardPoint from, int length) {
@@ -87,26 +108,24 @@ public class PathFinder {
         return null;
     }
 
-    private List<List<LoderunnerAction>> fillVisited(BoardPoint from, LoderunnerAction action, int length) {
-        if (canMoveToAndNotVisited(from, action)) {
-            BoardPoint point = action.getTo(from);
-            List<List<LoderunnerAction>> movements = getGoldPaths(point, ++length);
-            if (movements == null) {
-                return null;
-            } else {
-                movements.forEach(m -> m.add(action));
-                return movements;
-            }
-
-        }
-        return null;
-    }
+//    private List<List<LoderunnerAction>> fillVisited(BoardPoint from, LoderunnerAction action, int length) {
+//        if (canMoveToAndNotVisited(from, action)) {
+//            BoardPoint point = action.getTo(from);
+//            List<List<LoderunnerAction>> movements = getGoldPaths(point, ++length);
+//            if (movements == null) {
+//                return null;
+//            } else {
+//                movements.forEach(m -> m.add(action));
+//                return movements;
+//            }
+//
+//        }
+//        return null;
+//    }
 
     public List<LoderunnerAction> recoverPath() {
-        Optional<Pair<BoardPoint, Integer>> gold = gb.getGoldPositions().stream()
-                .map(a -> new Pair<>(a, getVisitedValue(a)))
-                .filter(p -> p.getValue() != 0)
-                .min(Comparator.comparing(Pair::getValue));
+        Optional<Pair<BoardPoint, Double>> gold = findClosestGold();
+
         if (!gold.isPresent()) {
             return emptyList();
         }
@@ -119,13 +138,31 @@ public class PathFinder {
             LoderunnerAction action = moveActions().stream()
                     .map(a -> new Pair<>(a, getVisitedValue(a.getFrom(currentNode1))))
                     .filter(p -> p.getValue() != 0)
-                    .filter(p -> gb.canMoveTo(p.getKey().getFrom(currentNode1), p.getKey()))
+                    .filter(p -> moveActionChecker.canMoveTo(p.getKey().getFrom(currentNode1), p.getKey()))
                     .min(Comparator.comparing(Pair::getValue))// проверяем соседние узлы
                     .orElseThrow(IllegalStateException::new).getKey();
-            path.add(action);// заносится в массив
+            List<LoderunnerAction> unwrappedAction = new ArrayList<>(action.unwrapComplexAction());
+            Collections.reverse(unwrappedAction);
+            path.addAll(unwrappedAction);// заносится в массив
             currentNode = action.getFrom(currentNode);//узел становится текущим
         }
         return path;
+    }
+
+    private Optional<Pair<BoardPoint, Double>> findClosestGold() {
+        return gb.getGoldPositions().stream()
+                .map(a -> new Pair<>(a, ((double) getVisitedValue(a) - 1) / getGoldPrice(a)))
+                .filter(p -> p.getValue() > 0)
+                .min(Comparator.comparing(Pair::getValue));
+    }
+
+    private Integer getGoldPrice(BoardPoint a) {
+        BoardElement element = gb.getElementAt(a);
+        if (!element.isGold()) {
+            throw new IllegalStateException();
+        }
+        return goldPrices.get(element);
+//                + MovesFromKilled.getMovesFromKilled(); TODO moves from last gathered gold
     }
 
     public void wavePropagation() {  // распространение волны
@@ -158,8 +195,8 @@ public class PathFinder {
 
     private void checkPoint(int markNumber, BoardPoint from, LoderunnerAction action) {
         BoardPoint to = action.getTo(from);
-        if (gb.canMoveTo(from, action) && getVisitedValue(to) == 0) {
-            visited[to.getX()][to.getY()] = markNumber + 1;
+        if (moveActionChecker.canMoveTo(from, action) && getVisitedValue(to) == 0) {
+            visited[to.getX()][to.getY()] = markNumber + action.getCost();
         }
     }
 }

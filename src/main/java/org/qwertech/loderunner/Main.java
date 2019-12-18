@@ -1,6 +1,15 @@
 package org.qwertech.loderunner;
 
+import static java.util.Arrays.asList;
+import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_LEFT;
+import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_RIGHT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_LEFT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_RIGHT;
+import static org.qwertech.loderunner.api.LoderunnerAction.GO_UP;
+
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
 
@@ -8,12 +17,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import static java.util.Arrays.asList;
-import static org.qwertech.loderunner.api.LoderunnerAction.*;
-
+@Slf4j
 public class Main {
 
     private static final String SERVER_ADDRESS = "http://eprumosw9005:8080/codenjoy-contest/board/player/up47ctoxlwznw9okpuqh?code=7626606218665225511";
@@ -36,9 +44,22 @@ public class Main {
 //        client.initiateExit();
     }
 
+    public static boolean allSame(Collection<?> list) {
+        Object fist = list.iterator().next();
+        for (Object s : list) {
+            if (!s.equals(fist)) {
+                return false;
+            }
+
+        }
+        return true;
+    }
+
     private static LoderunnerAction getAuto(GameBoard gb) {
-//        print(gb);
-        return new PathFinder(gb).getMove();
+        MovesFromKilled.analyseMovesFromKilled(gb);
+        LoderunnerAction move = new PathFinder(gb).getMove();
+        ActionsHistory.writeMove(gb, move);
+        return ActionsHistory.stuckCorrect(move);
     }
 
 

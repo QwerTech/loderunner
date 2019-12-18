@@ -1,28 +1,33 @@
 package org.qwertech.loderunner.api;
 
+import static com.google.common.collect.ImmutableMap.of;
+import static java.util.Arrays.asList;
+
+import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
-
-import static java.util.Arrays.asList;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Getter
+
 public enum LoderunnerAction {
     GO_LEFT('←'),
     GO_RIGHT('→'),
     GO_UP('↑'),
     GO_DOWN('↓'),
-    DRILL_RIGHT('⇝'),
-    DRILL_LEFT('⇜'),
+    DRILL_RIGHT('⤥'),
+    DRILL_LEFT('⤦'),
     DO_NOTHING('.'),
     SUICIDE('x');
 
     private final char symbol;
 
     public static List<LoderunnerAction> moveActions() {
-        return asList(GO_LEFT, GO_RIGHT, GO_UP, GO_DOWN);
+        return asList(GO_LEFT, GO_RIGHT, GO_UP, GO_DOWN, DRILL_RIGHT, DRILL_LEFT);
     }
 
     public boolean left() {
@@ -63,10 +68,26 @@ public enum LoderunnerAction {
             to = from.shiftTop();
         } else if (this.equals(GO_DOWN)) {
             to = from.shiftBottom();
+        } else if (this.equals(DRILL_RIGHT)) {
+            to = from.shiftBottom().shiftRight();
+        } else if (this.equals(DRILL_LEFT)) {
+            to = from.shiftBottom().shiftLeft();
         } else {
             throw new IllegalStateException();
         }
         return to;
+    }
+
+    private static final Map<LoderunnerAction, List<LoderunnerAction>> complexActions =
+            of(DRILL_RIGHT, ImmutableList.of(DRILL_RIGHT, GO_RIGHT, GO_DOWN),
+                    DRILL_LEFT, ImmutableList.of(DRILL_LEFT, GO_LEFT, GO_DOWN));
+
+    public Integer getCost() {
+        return complexActions.getOrDefault(this, Collections.singletonList(this)).size();
+    }
+
+    public List<LoderunnerAction> unwrapComplexAction() {
+        return complexActions.getOrDefault(this, Collections.singletonList(this));
     }
 
     public BoardPoint getFrom(BoardPoint to) {
@@ -79,6 +100,10 @@ public enum LoderunnerAction {
             from = to.shiftBottom();
         } else if (this.equals(GO_DOWN)) {
             from = to.shiftTop();
+        } else if (this.equals(DRILL_RIGHT)) {
+            from = to.shiftTop().shiftLeft();
+        } else if (this.equals(DRILL_LEFT)) {
+            from = to.shiftTop().shiftRight();
         } else {
             throw new IllegalStateException();
         }

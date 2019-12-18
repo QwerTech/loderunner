@@ -1,16 +1,16 @@
 package org.qwertech.loderunner.api;
 
 
+import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_LEFT;
+import static org.qwertech.loderunner.api.BoardElement.HERO_SHADOW_DRILL_RIGHT;
+
 import lombok.Getter;
 import lombok.NonNull;
+import org.qwertech.loderunner.DrillActionChecker;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.qwertech.loderunner.api.BoardElement.*;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
 
 public class GameBoard {
     @Getter
@@ -22,69 +22,6 @@ public class GameBoard {
                 .replace("\r", "");
     }
 
-    protected static boolean canMove(LoderunnerAction action, BoardElement toElement, BoardElement fromElement,
-                                     BoardElement underFromElement) {
-        List<BoardElement> fallIfUnderIsHero = asList(HERO_DRILL_LEFT,
-                HERO_DRILL_RIGHT,
-                HERO_LEFT,
-                HERO_RIGHT,
-                HERO_FALL_LEFT,
-                HERO_FALL_RIGHT,
-                HERO_PIPE_LEFT,
-                HERO_PIPE_RIGHT);
-        List<BoardElement> heroOnNothing = asList(HERO_DIE,
-                HERO_DRILL_LEFT,
-                HERO_DRILL_RIGHT,
-                HERO_LEFT,
-                HERO_RIGHT,
-                HERO_FALL_LEFT,
-                HERO_FALL_RIGHT);
-        if ((underFromElement.isNoneOrGold() || underFromElement.isPipe() || fallIfUnderIsHero.contains(underFromElement))
-                && (fromElement.isNoneOrGold() || heroOnNothing.contains(fromElement))) {
-            return action.down();
-        }
-
-        if (toElement.equals(UNDESTROYABLE_WALL)) {
-            return false;
-        }
-
-        if (toElement.isNoneOrGold()) {
-            if (action.horizontal()) {
-                return true;
-            }
-            if ((fromElement.isLadder()) && action.equals(GO_DOWN)) {
-                return true;
-            }
-            if (fromElement.isLadder() && (action.up() || action.horizontal())) {
-                return true;
-            }
-            if (fromElement.equals(NONE) && action.down()) {
-                return true;
-            }
-        }
-        if (toElement.equals(LADDER)) {
-            if ((fromElement.isLadder()) && action.vertical()) {
-                return true;
-            }
-            if ((fromElement.isNoneOrGold() || fromElement.isHero()) && (action.horizontal() || action.down())) {
-                return true;
-            }
-        }
-        if (toElement.equals(PIPE)) {
-            if (action.horizontal() || action.down()) {
-                return true;
-            }
-        }
-        if (fromElement.equals(PIPE) || fromElement.equals(HERO_PIPE_LEFT) || fromElement.equals(HERO_PIPE_RIGHT)) {
-            if (action.horizontal() && toElement.equals(PIPE)) {
-                return true;
-            }
-            if (toElement.isNoneOrGold() && action.down()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public int size() {
         return (int) Math.sqrt(boardString.length());
@@ -118,7 +55,7 @@ public class GameBoard {
     }
 
     public boolean hasElementAt(BoardPoint point, BoardElement element) {
-        if (point.isOutOfBoard(size())) {
+        if (isOutOfBoard(point)) {
             return false;
         }
 
@@ -222,7 +159,7 @@ public class GameBoard {
     }
 
     public boolean isNearToElement(BoardPoint point, BoardElement element) {
-        if (point.isOutOfBoard(size()))
+        if (isOutOfBoard(point))
             return false;
 
         return hasElementAt(point.shiftBottom(), element)
@@ -283,7 +220,7 @@ public class GameBoard {
     }
 
     public int getCountElementsNearToPoint(BoardPoint point, BoardElement element) {
-        if (point.isOutOfBoard(size()))
+        if (isOutOfBoard(point))
             return 0;
 
         return boolToInt(hasElementAt(point.shiftLeft(), element)) +
@@ -304,23 +241,22 @@ public class GameBoard {
         return bool ? 1 : 0;
     }
 
-    public boolean canMoveTo(BoardPoint from, LoderunnerAction action) {
 
-        BoardPoint under = from.shiftBottom();
-        BoardElement underElement = getElementAt(under);
 
-        BoardPoint to = action.getTo(from);
-        BoardElement toElement = getElementAt(to);
-        BoardElement fromElement = getElementAt(from);
-
-        return canMove(action, toElement, fromElement, underElement);
+    private boolean isOutOfBoard(BoardPoint overTo) {
+        return overTo.isOutOfBoard(size());
     }
 
-    public char[][] toArray() {
-        char[][] chars = new char[size()][size()];
+    public boolean isOutOfBoard(BoardPoint... points) {
+        int boardSize = size();
+        return Arrays.stream(points).anyMatch(p -> p.isOutOfBoard(boardSize));
+    }
+
+    public String[][] toArray() {
+        String[][] chars = new String[size()][size()];
         for (int i = 0; i < size(); i++) {
             for (int j = 0; j < size(); j++) {
-                chars[i][j] = getElementAt(new BoardPoint(i, j)).getSymbol();
+                chars[i][j] = String.valueOf(getElementAt(new BoardPoint(i, j)).getSymbol());
             }
         }
         return chars;
