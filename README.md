@@ -1,1 +1,1 @@
-![Alt text](output_example.png.png?raw=true "Output example")
+![Alt text](output_example.png?raw=true "Output example")
