@@ -1,19 +1,6 @@
 package org.qwertech.loderunner;
 
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.qwertech.loderunner.PrintUtils.actionsToSymbols;
-import static org.qwertech.loderunner.api.BoardElement.goldPrices;
-import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_LEFT;
-import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_RIGHT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_LEFT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_RIGHT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_UP;
-import static org.qwertech.loderunner.api.LoderunnerAction.moveActions;
-
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.qwertech.loderunner.api.BoardElement;
@@ -21,28 +8,28 @@ import org.qwertech.loderunner.api.BoardPoint;
 import org.qwertech.loderunner.api.GameBoard;
 import org.qwertech.loderunner.api.LoderunnerAction;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.qwertech.loderunner.PrintUtils.actionsToSymbols;
+import static org.qwertech.loderunner.api.BoardElement.goldPrices;
+import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 @Slf4j
 public class PathFinder {
+
+    private final GameBoard gb;
+    private MoveActionChecker moveActionChecker;
+    private int[][] visited;
 
     public PathFinder(GameBoard gb) {
         this.gb = gb;
 
         moveActionChecker = new MoveActionChecker(gb);
     }
-
-    private final GameBoard gb;
-    private MoveActionChecker moveActionChecker;
-    private int[][] visited;
 
     public List<LoderunnerAction> getPath() {
         visited = new int[gb.size()][gb.size()];
@@ -161,8 +148,7 @@ public class PathFinder {
         if (!element.isGold()) {
             throw new IllegalStateException();
         }
-        return goldPrices.get(element);
-//                + MovesFromKilled.getMovesFromKilled(); TODO moves from last gathered gold
+        return goldPrices.get(element) + Statistics.getGatheredGoldCountFromKilled();
     }
 
     public void wavePropagation() {  // распространение волны

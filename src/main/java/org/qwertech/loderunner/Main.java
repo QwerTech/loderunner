@@ -1,13 +1,5 @@
 package org.qwertech.loderunner;
 
-import static java.util.Arrays.asList;
-import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_LEFT;
-import static org.qwertech.loderunner.api.LoderunnerAction.DRILL_RIGHT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_DOWN;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_LEFT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_RIGHT;
-import static org.qwertech.loderunner.api.LoderunnerAction.GO_UP;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.qwertech.loderunner.api.GameBoard;
@@ -20,6 +12,9 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+
+import static java.util.Arrays.asList;
+import static org.qwertech.loderunner.api.LoderunnerAction.*;
 
 @Slf4j
 public class Main {
@@ -58,8 +53,9 @@ public class Main {
     private static LoderunnerAction getAuto(GameBoard gb) {
         MovesFromKilled.analyseMovesFromKilled(gb);
         LoderunnerAction move = new PathFinder(gb).getMove();
-        ActionsHistory.writeMove(gb, move);
-        return ActionsHistory.stuckCorrect(move);
+        History.writeMove(gb, move);
+        new Statistics(gb).analyseMove();
+        return History.stuckCorrect(move);
     }
 
 
